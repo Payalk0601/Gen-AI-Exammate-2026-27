@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env
+.idea/
+.vscode/
+# downloaded source documents are re-creatable with `python -m app.fetch`
+data/raw/*
+!data/raw/.gitkeep
+data/ingest_errors.log

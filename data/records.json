@@ -1,0 +1,222 @@
+[
+  {
+    "id": 1,
+    "rule_reference": "Rule 5(1)(ख)",
+    "stakeholder": "Waste generators",
+    "category": "Segregation",
+    "obligation": "Segregate waste at source into four streams (wet, dry, sanitary, special-care) and hand it over to authorised waste pickers or collectors as the local body directs.",
+    "timeline": "As directed by the local body from time to time",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 4(1)(a) (three streams: bio-degradable, non-biodegradable, domestic hazardous)"
+  },
+  {
+    "id": 2,
+    "rule_reference": "Rule 5(1)(ग)",
+    "stakeholder": "Waste generators",
+    "category": "Segregation",
+    "obligation": "Wrap used sanitary waste (diapers, pads) securely in brand-owner pouches or suitable wrapping and put it in the separate sanitary-waste bin, not the wet, dry or special-care bins.",
+    "timeline": "Whenever such waste is generated",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 4(1)(b) (earlier placed in the dry-waste bin)"
+  },
+  {
+    "id": 3,
+    "rule_reference": "Rule 5(1)(ज)",
+    "stakeholder": "Waste generators",
+    "category": "Fees",
+    "obligation": "Pay the user fee for solid waste management that the local body's bye-laws specify.",
+    "timeline": "As per local body bye-laws",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 4(3)"
+  },
+  {
+    "id": 4,
+    "rule_reference": "Rule 5(2)",
+    "stakeholder": "Large premises (hotels, restaurants, RWAs, market associations, gated communities, institutions above 5,000 sq m)",
+    "category": "Segregation",
+    "obligation": "Ensure source segregation in partnership with the local body, provide separate collection streams, hand recyclables to authorised collectors or recyclers, process wet waste on premises by composting or bio-methanation as far as possible, and give residual waste to the local-body agency.",
+    "timeline": "Within one year of Gazette notification of the Rules",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 4(6)-(8)"
+  },
+  {
+    "id": 5,
+    "rule_reference": "Rule 6(क)",
+    "stakeholder": "Bulk waste generators",
+    "category": "Registration",
+    "obligation": "Register on the centralised online portal with the concerned local body and report any change in registration details or conditions to it.",
+    "timeline": "Portal-based; CPCB portal due within six months of commencement (Rule 16(1))",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  },
+  {
+    "id": 6,
+    "rule_reference": "Rule 6(ज)",
+    "stakeholder": "Bulk waste generators",
+    "category": "Reporting",
+    "obligation": "File an annual return on the centralised portal, including details of the Extended Bulk Waste Generator Responsibility (EBWGR) certificate for the total waste generated.",
+    "timeline": "By 30 June every year",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  },
+  {
+    "id": 7,
+    "rule_reference": "Rule 7(च)",
+    "stakeholder": "Waste processing facility operators",
+    "category": "Authorisation",
+    "obligation": "Obtain authorisation from the State Pollution Control Board for setting up and operating waste processing units.",
+    "timeline": "Before operation; SPCB decides within 60 days (Rule 41(1)(v))",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 17(3)"
+  },
+  {
+    "id": 8,
+    "rule_reference": "Rule 7(ग)",
+    "stakeholder": "Waste processing facility operators",
+    "category": "Reporting",
+    "obligation": "File quarterly returns and an annual return (Form III) with the local body covering waste received, waste processed, rejects sent to landfill and compost quality and sale; the data is published in the public domain.",
+    "timeline": "Quarterly: by the 15th of the first month of the next quarter; annual: by 30 June",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 17(6) (annual Form III by 30 April)"
+  },
+  {
+    "id": 9,
+    "rule_reference": "Rule 8(छ)",
+    "stakeholder": "Local bodies, concessionaires and third parties in collection, segregation and transport",
+    "category": "Reporting",
+    "obligation": "File quarterly and annual returns with the local body on quantities of wet, dry, sanitary and special-care waste handed to registered processors or recyclers; the local body validates them before further processing.",
+    "timeline": "Quarterly: by the 15th of the first month of the next quarter; annual: by 30 June",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  },
+  {
+    "id": 10,
+    "rule_reference": "Rule 9(2),(4)",
+    "stakeholder": "Material Recovery Facility (MRF) units",
+    "category": "Reporting",
+    "obligation": "Register with the local body, meet CPCB standards, send recyclable and non-recyclable fractions only to registered processors, and report waste received and dispatched through the portal.",
+    "timeline": "Quarterly: by the 15th of the first month of the next quarter",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 15(h) (local bodies set up MRFs; no separate unit duty)"
+  },
+  {
+    "id": 11,
+    "rule_reference": "Rule 11(1)",
+    "stakeholder": "Industrial units using solid fuel near RDF / waste-based fuel plants",
+    "category": "Resource recovery",
+    "obligation": "Replace part of solid-fuel use with refuse-derived fuel, segregated combustible fraction or agri-residue that meets CPCB norms (units within 100 km, row 1 of the Rule 11 table); register with the SPCB and file an annual return (Rule 11(2)).",
+    "timeline": "At least 6% from commencement, 10% after 3 years, 15% after 6 years; annual return by 30 June",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 18 (at least 5% within six months)"
+  },
+  {
+    "id": 12,
+    "rule_reference": "Rule 14(8)",
+    "stakeholder": "Operators of operational sanitary landfills",
+    "category": "Reporting",
+    "obligation": "Register under the Rules and file an annual return in the prescribed form on the centralised portal stating the waste deposited.",
+    "timeline": "By 30 June every year",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  },
+  {
+    "id": 13,
+    "rule_reference": "Rule 39(4)",
+    "stakeholder": "Urban local bodies",
+    "category": "Collection",
+    "obligation": "Arrange door-to-door collection of segregated waste from all households including slums and informal settlements, and from commercial, institutional and other non-residential premises, directly or through a third party.",
+    "timeline": "Ongoing",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 15(b)"
+  },
+  {
+    "id": 14,
+    "rule_reference": "Rule 39(5)",
+    "stakeholder": "Urban local bodies",
+    "category": "Bye-laws",
+    "obligation": "Frame bye-laws that incorporate the provisions of the Rules.",
+    "timeline": "By 31 March 2027",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 15(e) (within one year of the 2016 notification)"
+  },
+  {
+    "id": 15,
+    "rule_reference": "Rule 39(51)",
+    "stakeholder": "Urban local bodies",
+    "category": "Infrastructure",
+    "obligation": "Paint public bins green for wet waste and blue for dry waste; red bins for sanitary waste may be placed in public toilets where needed.",
+    "timeline": "Ongoing",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 15(h) (green wet, white recyclable, black other)"
+  },
+  {
+    "id": 16,
+    "rule_reference": "Rule 40(2)(i)",
+    "stakeholder": "Rural local bodies (District Panchayats)",
+    "category": "Planning",
+    "obligation": "Prepare a solid waste action plan in the prescribed format per the state policy, covering gram-panchayat-wise waste generation, a five-year projection, collection and transport planning and infrastructure mapping.",
+    "timeline": "Within one year of notification of the state policy and strategy",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  },
+  {
+    "id": 17,
+    "rule_reference": "Rule 35(2)(i)",
+    "stakeholder": "State Urban Development Departments",
+    "category": "Enforcement",
+    "obligation": "Ensure that all local authorities comply with the Rules.",
+    "timeline": "Ongoing; state master plans to be uploaded by 30 September 2026 (Rule 35(1)(xii))",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 11(1)(d)"
+  },
+  {
+    "id": 18,
+    "rule_reference": "Rule 37(ii)",
+    "stakeholder": "District Magistrates / Collectors / Deputy Commissioners",
+    "category": "Enforcement",
+    "obligation": "Review local bodies' compliance on segregation, collection, sorting, processing, treatment and disposal, take remedial measures, and upload review-meeting minutes on the local body's portal.",
+    "timeline": "At least once every quarter",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 12(b)"
+  },
+  {
+    "id": 19,
+    "rule_reference": "Rule 41(1)(i)",
+    "stakeholder": "State Pollution Control Boards / Pollution Control Committees",
+    "category": "Enforcement",
+    "obligation": "Enforce the Rules through local bodies and review their implementation in close coordination with the state urban and rural development departments.",
+    "timeline": "At least twice a year",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": "Rule 16(1)(a)"
+  },
+  {
+    "id": 20,
+    "rule_reference": "Rule 16(1)",
+    "stakeholder": "Central Pollution Control Board",
+    "category": "Infrastructure",
+    "obligation": "Establish the centralised online portal for registration of regulated entities and filing of annual returns, with national, state and district dashboards in the public domain.",
+    "timeline": "Within six months of commencement of the Rules (in force 1 April 2026)",
+    "rules_version": "SWM Rules 2026",
+    "source_url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "rule_2016_match": null
+  }
+]

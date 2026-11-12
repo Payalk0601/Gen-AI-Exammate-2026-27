@@ -1,60 +1,88 @@
-# KachraCheck ♻️
+# KachraCheck
 
-> Type in any piece of household waste and find out which bin it belongs in, in under five seconds.
+**A stakeholder-wise duty checker for India's Solid Waste Management Rules, 2026.**
+Pick who you are (household, bulk generator, municipal body, regulator...) and see exactly what the
+Rules expect from you, by when, and how it differs from the 2016 Rules.
 
-**Author:** Payal · Final-year B.Tech (AI & ML), Sanjivani University, Kopargaon
-**Programme:** Gen AI Exammate 2026-27
-**Status:** In progress (Day 1 to Day 2 done)
+| | |
+|---|---|
+| **Product** | REST API and command-line lookup over a structured dataset of duty clauses |
+| **User** | A household or bulk waste generator, a municipal or panchayat officer, a facility operator, a student or compliance analyst |
+| **Problem** | The 2026 Rules replace the 2016 Rules, run to 40+ pages, and split duties across 15+ stakeholders (generators, bulk generators, urban and rural local bodies, state departments, SPCBs, facility operators). Most people cannot tell which clause binds them or what changed. |
+| **Data source** | Solid Waste Management Rules, 2026 (Gazette S.O. 388(E), 27 Jan 2026, in force 1 April 2026), published by CPCB: <https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf>. 2016 clause mapping comes from the SWM Rules 2016 toolkit (MoEFCC/MoHUA/CPCB/NPC). |
 
-## Problem
-In most Indian households, waste ends up mixed in a single bin. Wet, dry, hazardous and sanitary waste
-all get combined, which makes recycling and composting hard for municipal workers. People don't
-segregate mostly because they are unsure *where* an item goes, not because they don't care.
+**Author:** Payal, B.Tech (AI & ML), Sanjivani University, Kopargaon · Gen AI Exammate 2026-27
 
-## Solution
-KachraCheck is a small assistant that answers one question: **"Where does this go?"**
-It keeps a growing knowledge base of everyday waste items, each with a category, a bin colour,
-a recyclability flag and a short disposal tip. Later days will add an LLM layer that handles items
-not yet in the knowledge base.
+## Record fields
+`id, rule_reference, stakeholder, category, obligation, timeline, rules_version, rule_2016_match, source_url`
 
-## Bin colour guide used in this project
-| Colour | Category | Examples |
-|--------|----------|----------|
-| Green  | Wet (biodegradable) | Vegetable peels, tea leaves |
-| Blue   | Dry (recyclable/non-biodegradable) | Paper, plastic bottles, glass |
-| Red    | Hazardous and e-waste | Batteries, CFL bulbs, old chargers |
-| Black  | Sanitary / reject | Diapers, sanitary pads, used masks |
-
-## Tech stack
-Python 3 · JSON for storage · argparse for the CLI · (planned) LLM API for unknown items
-
-## Project layout
-```
-.
-├── README.md
-├── day01_intro.py          # project banner + greeting
-├── day01_menu.py           # interactive menu
-├── data/
-│   └── sample_records.json # 18 KachraCheck records
-└── app/
-    ├── __init__.py
-    ├── records.py          # load / validate / search / add records
-    └── cli.py              # command line interface
-```
+`rule_2016_match` is `null` where no direct 2016 clause was identified (for example portal registration and
+bulk-generator duties are new in 2026). Clause letters follow the Devanagari lettering printed in the gazette PDF.
 
 ## How to run
 ```bash
-python day01_intro.py
-python day01_menu.py
+git clone https://github.com/Payalk0601/sanjivani-sj-66-kachracheck.git && cd sanjivani-sj-66-kachracheck
+python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
 
-python -m app.cli list
-python -m app.cli search bottle
-python -m app.cli category hazardous
-python -m app.cli add "Pizza box (oily)" wet --tip "Greasy cardboard can't be recycled; compost it."
-python -m app.cli stats
+uvicorn app.main:app --reload          # API on http://127.0.0.1:8000  (interactive docs: /docs)
+```
+| Endpoint | What it does |
+|---|---|
+| `GET /health` | status, record count, search engine in use |
+| `GET /records?limit=10&offset=0` | list records (limit 1-100) |
+| `GET /records/{id}` | one record, `404` if the id does not exist |
+| `GET /search?q=annual return&limit=5` | TF-IDF + cosine ranked records with scores |
+| `POST /questions` | body `{"question": "...", "name": "optional"}` returns the 3 closest duty clauses (`201`) |
+
+```bash
+curl "http://127.0.0.1:8000/search?q=bin%20colours%20for%20municipalities"
+curl -X POST http://127.0.0.1:8000/questions -H "Content-Type: application/json" \
+     -d '{"question": "Who must file an annual return?", "name": "Payal"}'
+```
+Other commands:
+```bash
+python analysis/explore.py                 # 3 facts about the records (pandas)
+python -m unittest discover tests          # API tests
+python day01_intro.py && python day01_menu.py
+python -m app.cli search "30 June"         # command-line lookup
+python -m app.fetch && python -m app.ingest   # download sources, rebuild data/records.json
 ```
 
-## Roadmap
-- [x] D1: Project card, intro and menu scripts
-- [x] D2: Records dataset, record functions, CLI
-- [ ] D3+: Fuzzy matching, LLM fallback for unknown items, simple web UI
+## Layout
+```
+README.md
+day01_intro.py          # prints the project card, asks name + question
+day01_menu.py           # while-loop menu incl. bulk-generator rule check
+s1_records_demo.py      # print all / search / count per category (plain dicts)
+data/sample_records.json   # 20 hand-curated duty records
+data/records.json          # cleaned output of app/ingest.py
+data/raw/                  # downloaded source documents (git-ignored)
+app/models.py   records.py   cli.py   ingest.py   fetch.py
+app/main.py                # FastAPI service
+app/smart_search.py        # TF-IDF + cosine ranking (stemming + plain-language synonyms)
+analysis/explore.py        # pandas facts
+tests/test_api.py
+```
+
+## Run
+```bash
+python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+python day01_intro.py
+python day01_menu.py
+python s1_records_demo.py
+
+python -m app.cli list
+python -m app.cli search "30 June"
+python -m app.cli count --by stakeholder
+python -m app.cli show 14
+
+python -m app.fetch                  # download source documents into data/raw/
+python -m app.ingest                 # clean -> data/records.json (+ PDF cross-check if the PDF is present)
+```
+
+## Limits
+Hand-curated from the gazette text; verify against the official PDF before relying on any clause.
+This is a study project, not legal advice.
