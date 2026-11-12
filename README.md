@@ -13,6 +13,16 @@ Rules expect from you, by when, and how it differs from the 2016 Rules.
 
 **Author:** Payal, B.Tech (AI & ML), Sanjivani University, Kopargaon · Gen AI Exammate 2026-27
 
+## Six questions KachraCheck should answer
+1. Who has to separate waste at home, and into which streams?
+2. Is my housing society a bulk waste generator and what must it do?
+3. By when must a processing facility file its annual return?
+4. What bin colours must my municipality use?
+5. How did the 2026 rules change sanitary waste wrapping compared with 2016?
+6. What is the exact fine in rupees for a household that burns waste? *(my data cannot answer this one, and the API says so)*
+
+All ten test questions: [docs/user_questions.md](docs/user_questions.md) · How LLMs work: [docs/how_llms_work.md](docs/how_llms_work.md) · Checkpoint 1: [docs/checkpoint-1.md](docs/checkpoint-1.md)
+
 ## Record fields
 `id, rule_reference, stakeholder, category, obligation, timeline, rules_version, rule_2016_match, source_url`
 
@@ -21,7 +31,7 @@ bulk-generator duties are new in 2026). Clause letters follow the Devanagari let
 
 ## How to run
 ```bash
-git clone https://github.com/Payalk0601/sanjivani-sj-66-kachracheck.git && cd sanjivani-sj-66-kachracheck
+git clone https://github.com/Payalk0601/Gen-AI-Exammate-2026-27.git && cd Gen-AI-Exammate-2026-27
 python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
@@ -43,6 +53,7 @@ curl -X POST http://127.0.0.1:8000/questions -H "Content-Type: application/json"
 Other commands:
 ```bash
 python analysis/explore.py                 # 3 facts about the records (pandas)
+python analysis/check_questions.py         # scores the 10 user questions
 python -m unittest discover tests          # API tests
 python day01_intro.py && python day01_menu.py
 python -m app.cli search "30 June"         # command-line lookup

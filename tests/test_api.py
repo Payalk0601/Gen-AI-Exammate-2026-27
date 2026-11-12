@@ -35,6 +35,18 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(r.json()["answers"][0]["record"]["rule_reference"], "Rule 39(51)")
         self.assertEqual(client.post("/questions", json={"question": "hi"}).status_code, 422)
 
+    def test_unanswerable_question_is_flagged(self):
+        r = client.post("/questions", json={"question": "What is the exact fine in rupees for a household that burns waste?"})
+        body = r.json()
+        self.assertEqual(r.status_code, 201)
+        self.assertFalse(body["answerable"])
+        self.assertEqual(body["answers"], [])
+        self.assertIn("fine", body["missing_terms"])
+
+    def test_answerable_question_is_not_flagged(self):
+        body = client.get("/search", params={"q": "annual return 30 June"}).json()
+        self.assertTrue(body["answerable"])
+
 
 if __name__ == "__main__":
     unittest.main()

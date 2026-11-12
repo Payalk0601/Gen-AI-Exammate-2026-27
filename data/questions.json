@@ -1,0 +1,12 @@
+[
+  {"id": 1, "asked_by": "Household member", "question": "Who has to separate waste at home, and into which streams?", "expected_record_ids": [1], "answerable": true},
+  {"id": 2, "asked_by": "Housing society secretary", "question": "Is my housing society a bulk waste generator and what must it do?", "expected_record_ids": [4, 5], "answerable": true},
+  {"id": 3, "asked_by": "Compost plant operator", "question": "By when must a processing facility file its annual return?", "expected_record_ids": [8], "answerable": true},
+  {"id": 4, "asked_by": "Resident", "question": "What bin colours must my municipality use?", "expected_record_ids": [15], "answerable": true},
+  {"id": 5, "asked_by": "Student", "question": "How did the 2026 rules change sanitary waste wrapping compared with 2016?", "expected_record_ids": [2], "answerable": true},
+  {"id": 6, "asked_by": "Resident", "question": "What is the exact fine in rupees for a household that burns waste?", "expected_record_ids": [], "answerable": false},
+  {"id": 7, "asked_by": "Compliance analyst", "question": "Which duties have a 30 June deadline?", "expected_record_ids": [6, 8, 9, 11, 12], "answerable": true},
+  {"id": 8, "asked_by": "Resident", "question": "Does my municipality have to collect waste from my door every day?", "expected_record_ids": [13], "answerable": true},
+  {"id": 9, "asked_by": "Resident", "question": "Who checks whether my municipality is following the rules?", "expected_record_ids": [18, 19], "answerable": true},
+  {"id": 10, "asked_by": "Municipal officer", "question": "When must urban local bodies make their bye-laws?", "expected_record_ids": [14], "answerable": true}
+]

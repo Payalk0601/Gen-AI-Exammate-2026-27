@@ -15,6 +15,8 @@ try:                                    # TF-IDF ranking (scikit-learn); plain k
 except ImportError:                     # pragma: no cover
     SmartSearch = None
 
+MIN_COVERAGE = 0.4
+
 app = FastAPI(
     title="KachraCheck API",
     version="0.2.0",
@@ -46,6 +48,9 @@ class SearchHit(BaseModel):
 class SearchOut(BaseModel):
     query: str
     engine: str
+    answerable: bool = Field(True, description="False when most of the question's words appear nowhere in the data")
+    coverage: Optional[float] = None
+    missing_terms: List[str] = []
     count: int
     results: List[SearchHit]
 
@@ -60,6 +65,8 @@ class QuestionOut(BaseModel):
     received_at: str
     name: Optional[str]
     question: str
+    answerable: bool
+    missing_terms: List[str]
     answers: List[SearchHit]
     note: str
 
@@ -67,13 +74,17 @@ class QuestionOut(BaseModel):
 def _search(q: str, limit: int) -> SearchOut:
     if not q.strip():
         raise HTTPException(status_code=422, detail="q must not be blank")
+    coverage, missing = None, []
     if ENGINE:
         hits = [SearchHit(score=s, record=r.to_dict()) for r, s in ENGINE.rank(q, limit)]
         engine = "tfidf-cosine"
+        coverage, missing = ENGINE.coverage(q)
     else:
         hits = [SearchHit(score=None, record=r.to_dict()) for r in rec.search(RECORDS, q)[:limit]]
         engine = "keyword"
-    return SearchOut(query=q, engine=engine, count=len(hits), results=hits)
+    answerable = coverage is None or coverage >= MIN_COVERAGE
+    return SearchOut(query=q, engine=engine, answerable=answerable, coverage=coverage,
+                     missing_terms=missing, count=len(hits), results=hits)
 
 
 @app.get("/health")
@@ -103,14 +114,19 @@ def search(q: str = Query(..., min_length=1, description="Words to search for"),
 @app.post("/questions", response_model=QuestionOut, status_code=201)
 def ask_question(payload: QuestionIn):
     result = _search(payload.question, 3)
+    if not result.answerable:
+        result.results = []
     entry = QuestionOut(
         id=len(QUESTIONS) + 1,
         received_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         name=payload.name,
         question=payload.question,
+        answerable=result.answerable,
+        missing_terms=result.missing_terms,
         answers=result.results,
-        note=("Closest duty clauses shown; verify against the official gazette."
-              if result.results else "No matching clause found. Try other words, e.g. 'annual return'."),
+        note=("Closest duty clauses shown; verify against the official gazette." if result.results
+              else "The KachraCheck data has no clause about: " + ", ".join(result.missing_terms) + "."
+              if not result.answerable else "No matching clause found. Try other words, e.g. 'annual return'."),
     )
     QUESTIONS.append(entry)
     return entry
