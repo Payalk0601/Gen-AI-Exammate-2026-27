@@ -130,3 +130,6 @@ def ask_question(payload: QuestionIn):
     )
     QUESTIONS.append(entry)
     return entry
+
+from app.chat import router as chat_router  # Day 6
+app.include_router(chat_router)
