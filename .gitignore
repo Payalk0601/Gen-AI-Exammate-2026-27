@@ -5,7 +5,6 @@ __pycache__/
 .env
 .idea/
 .vscode/
-# downloaded source documents are re-creatable with `python -m app.fetch`
-data/raw/*
-!data/raw/.gitkeep
+# unfinished downloads only; the fetched PDF and manifest in data/raw/ ARE committed as evidence
+data/raw/*.part
 data/ingest_errors.log

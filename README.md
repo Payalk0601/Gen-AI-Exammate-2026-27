@@ -94,6 +94,24 @@ python -m app.fetch                  # download source documents into data/raw/
 python -m app.ingest                 # clean -> data/records.json (+ PDF cross-check if the PDF is present)
 ```
 
+## Data pipeline
+```
+python -m app.fetch      # downloads the SWM Rules 2026 PDF (+ 3 other documents) into data/raw/, writes data/raw/manifest.json
+python -m app.ingest     # PDF -> English pages -> rules -> clauses -> data/records_from_pdf.json
+python -m app.ingest --merge   # optional: also append those rows to data/records.json
+```
+| File | What it is |
+|---|---|
+| `data/raw/solid-waste-management-rules-2026.pdf` | the source document (committed as evidence) |
+| `data/raw/manifest.json` | URL, size, SHA-256 and time of every download |
+| `data/raw/rule_index.json` | rule number and heading found in the PDF |
+| `data/records_from_pdf.json` | one row per clause, built by `app/ingest.py` from the PDF |
+| `data/records.json` | 20 hand-checked records (English paraphrase) that the API serves |
+
+PDF rows hold the clause text as printed and a timeline picked out by pattern matching, so they are rougher than the
+20 curated records. They are kept separate on purpose: merging them changes search results, so run
+`python analysis/check_questions.py` after `--merge`.
+
 ## Limits
 Hand-curated from the gazette text; verify against the official PDF before relying on any clause.
 This is a study project, not legal advice.

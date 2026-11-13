@@ -1,0 +1,38 @@
+[
+  {
+    "name": "swmp_home.html",
+    "url": "https://swmp.cpcb.gov.in/",
+    "status": "ok",
+    "error": null,
+    "bytes": 114817,
+    "sha256": "34f633cc834b204011ef471e4b523b6aa83d3dddbabc875734d49158fb5c951d",
+    "content_type": "text/html; charset=utf-8",
+    "fetched_at": "2026-11-13T07:57:01+00:00"
+  },
+  {
+    "name": "solid-waste-management-rules-2026.pdf",
+    "url": "https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf",
+    "status": "ok",
+    "error": null,
+    "bytes": 2924817,
+    "sha256": "4963ee304d0e6d69097a35036243c27a6cb5548c9d12338d999ab18c63d81591",
+    "content_type": "application/pdf",
+    "fetched_at": "2026-11-13T07:57:03+00:00"
+  },
+  {
+    "name": "swm-rules-2016-toolkit-npc.pdf",
+    "url": "https://npcindia.gov.in/NPC/Files/delhiOFC/EM/Toolkit-kit-on-Solid-waste-management.pdf",
+    "status": "failed",
+    "error": "HTTP 404"
+  },
+  {
+    "name": "swm-rules-2016-cag-summary.pdf",
+    "url": "https://www.cag.org.in/sites/default/files/database/report_swm_rules_2016_salient_features_20170707_0.pdf",
+    "status": "ok",
+    "error": null,
+    "bytes": 2051366,
+    "sha256": "ea339971b988a3bb1ad7563d5a4d5b8804d05f92ee1b4c1837006e715c6dfdc0",
+    "content_type": "application/pdf",
+    "fetched_at": "2026-11-13T07:57:18+00:00"
+  }
+]
