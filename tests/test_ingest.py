@@ -42,6 +42,12 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(refs, [(1, "a"), (1, "b"), (2, None)])
         self.assertTrue(clauses[0][2].startswith("Every waste generator shall"))
 
+    def test_standalone_clause_does_not_get_intro(self):
+        body = "(1) Every waste generator shall,\u2014 (a) pay the fee; (b) Every street vendor shall keep the area clean."
+        clauses = ingest.split_clauses(body)
+        self.assertTrue(clauses[0][2].startswith("Every waste generator shall pay"))
+        self.assertEqual(clauses[1][2], "Every street vendor shall keep the area clean.")
+
     def test_roman_list_stays_inside_clause(self):
         body = ingest.split_rules(SAMPLE)[7][1]
         self.assertEqual(len(ingest.split_clauses(body)), 1)
@@ -51,6 +57,7 @@ class ParsingTests(unittest.TestCase):
         self.assertIn("within one year", ingest.extract_timeline("ensure this within one year of notification"))
         self.assertIn("15th of the first month", ingest.extract_timeline("by the 15th of the first month of the next quarter"))
         self.assertEqual(ingest.extract_timeline("keep the premises clean"), "Not stated in clause")
+        self.assertEqual(ingest.extract_timeline("as the local body directs from time to time"), "from time to time")
 
     def test_category(self):
         self.assertEqual(ingest.classify("file an annual return"), "Reporting")

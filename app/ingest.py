@@ -176,7 +176,10 @@ def split_clauses(body: str) -> list:
             continue
         intro = next((p[2] for p in pieces if p[0] == s and p[1] is None), "")
         intro = intro.rstrip(" ,;:\u2014\u2013-")
-        clauses.append((s, letter, f"{intro[-160:]} {text}".strip() if intro else text))
+        # A clause that starts with a capital letter is a full sentence with its own subject
+        # ("Every street vendor shall ..."), so the sub-rule's introduction must not be added in front.
+        standalone = text[:1].isupper()
+        clauses.append((s, letter, f"{intro[-160:]} {text}".strip() if intro and not standalone else text))
     return clauses
 
 
@@ -201,6 +204,7 @@ TIMELINE_PATTERNS = [
     r"\b(?:every|each)\s+(?:year|quarter|month)\b",
     r"\bquarterly\b",
     r"\bannual(?:ly)?\b",
+    r"\bfrom time to time\b",
 ]
 CATEGORY_KEYWORDS = [
     ("Reporting", r"\b(return|report|submit|furnish)\w*"),
