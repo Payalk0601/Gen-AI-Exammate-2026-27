@@ -21,7 +21,7 @@ Rules expect from you, by when, and how it differs from the 2016 Rules.
 5. How did the 2026 rules change sanitary waste wrapping compared with 2016?
 6. What is the exact fine in rupees for a household that burns waste? *(my data cannot answer this one, and the API says so)*
 
-All ten test questions: [docs/user_questions.md](docs/user_questions.md) · How LLMs work: [docs/how_llms_work.md](docs/how_llms_work.md) · Checkpoint 1: [docs/checkpoint-1.md](docs/checkpoint-1.md)
+All ten test questions: [docs/user_questions.md](docs/user_questions.md) · How LLMs work: [docs/how_llms_work.md](docs/how_llms_work.md) · Checkpoint 1: [docs/checkpoint-1.md](docs/checkpoint-1.md) · Data pipeline results: [docs/data_pipeline.md](docs/data_pipeline.md)
 
 ## Record fields
 `id, rule_reference, stakeholder, category, obligation, timeline, rules_version, rule_2016_match, source_url`
@@ -68,10 +68,15 @@ day01_menu.py           # while-loop menu incl. bulk-generator rule check
 s1_records_demo.py      # print all / search / count per category (plain dicts)
 data/sample_records.json   # 20 hand-curated duty records
 data/records.json          # cleaned output of app/ingest.py
-data/raw/                  # downloaded source documents (git-ignored)
+data/records_from_pdf.json # 222 clause rows built by app/ingest.py from the PDF
+data/raw/                  # downloaded source documents + manifest (committed as evidence)
 app/models.py   records.py   cli.py   ingest.py   fetch.py
 app/main.py                # FastAPI service
 app/smart_search.py        # TF-IDF + cosine ranking (stemming + plain-language synonyms)
+app/chunking.py            # PDF -> chunks that keep source, page and title
+app/embed.py               # embedders (MiniLM / offline hash), in-memory semantic search, eval report
+app/vectorstore.py         # persistent Chroma collection of all chunks
+eval/search_results.md     # hits of the 10 questions (written by `python -m app.embed --eval`)
 analysis/explore.py        # pandas facts
 tests/test_api.py
 ```
@@ -111,6 +116,22 @@ python -m app.ingest --merge   # optional: also append those rows to data/record
 PDF rows hold the clause text as printed and a timeline picked out by pattern matching, so they are rougher than the
 20 curated records. They are kept separate on purpose: merging them changes search results, so run
 `python analysis/check_questions.py` after `--merge`.
+
+## Semantic search
+```
+python -m app.chunking                   # what gets indexed: chunks per PDF, with page and title
+python -m app.embed --eval               # run the 10 questions -> eval/search_results.md
+python -m app.vectorstore --rebuild      # index every chunk into the persistent Chroma collection (data/chroma/)
+uvicorn app.main:app --reload            # then: GET /search/semantic?q=bin colours for municipalities&k=5
+```
+| Module | What it does |
+|---|---|
+| `app/chunking.py` | reads `data/raw/*.pdf`, keeps only English pages, cuts each page at rule headings, packs sentences into chunks of up to 800 characters with one sentence of overlap. Every chunk keeps `source`, `page` and `title` (for example `Rule 5: Duties of waste generator`). |
+| `app/embed.py` | turns text into vectors with all-MiniLM-L6-v2 (default) and searches them by cosine similarity. `KACHRACHECK_EMBEDDER=hash` switches to an offline spelling-based embedder used only by the tests. |
+| `app/vectorstore.py` | stores chunk text, vector and metadata in a persistent Chroma collection; re-indexing replaces chunks instead of duplicating them, and an index built with one embedder cannot be queried with another. |
+
+The first run downloads the MiniLM model (about 80 MB) into `data/model_cache/` (git-ignored; change it with `KACHRACHECK_MODEL_DIR`) and needs internet. If Chroma has trouble with a path that contains
+non-English folder names or a OneDrive folder, store the index elsewhere: `set KACHRACHECK_CHROMA_DIR=C:\kachracheck_chroma`.
 
 ## Limits
 Hand-curated from the gazette text; verify against the official PDF before relying on any clause.

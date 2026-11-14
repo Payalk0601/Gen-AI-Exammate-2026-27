@@ -8,3 +8,7 @@ __pycache__/
 # unfinished downloads only; the fetched PDF and manifest in data/raw/ ARE committed as evidence
 data/raw/*.part
 data/ingest_errors.log
+# vector index: rebuild with `python -m app.vectorstore --rebuild`
+data/chroma/
+# downloaded embedding model (about 80 MB)
+data/model_cache/

@@ -26,6 +26,7 @@ app = FastAPI(
 RECORDS = rec.load_records()
 ENGINE = SmartSearch(RECORDS) if SmartSearch else None
 QUESTIONS: list = []                    # in-memory log of POST /questions
+_STORE = None                           # Chroma vector store, opened on first use
 
 
 class RecordOut(BaseModel):
@@ -92,6 +93,32 @@ def health():
     return {"status": "ok", "records": len(RECORDS), "search_engine": "tfidf-cosine" if ENGINE else "keyword"}
 
 
+class SemanticHit(BaseModel):
+    score: float = Field(..., description="cosine similarity, higher is closer")
+    title: str
+    source: str
+    page: int
+    text: str
+    chunk_id: str
+    source_url: str = ""
+
+
+class SemanticOut(BaseModel):
+    query: str
+    embedder: str
+    count: int
+    results: List[SemanticHit]
+
+
+def get_store():
+    """Open the Chroma store once. Raises ImportError if chromadb is missing."""
+    global _STORE
+    if _STORE is None:
+        from app.vectorstore import VectorStore
+        _STORE = VectorStore()
+    return _STORE
+
+
 @app.get("/records", response_model=List[RecordOut])
 def list_records(limit: int = Query(10, ge=1, le=100), offset: int = Query(0, ge=0)):
     return [r.to_dict() for r in RECORDS[offset:offset + limit]]
@@ -109,6 +136,25 @@ def get_record(record_id: int):
 def search(q: str = Query(..., min_length=1, description="Words to search for"),
            limit: int = Query(5, ge=1, le=50)):
     return _search(q, limit)
+
+
+@app.get("/search/semantic", response_model=SemanticOut)
+def search_semantic(q: str = Query(..., min_length=1, description="A question in plain words"),
+                    k: int = Query(5, ge=1, le=20)):
+    """Meaning-based search over the chunks of the source PDFs (Chroma + embeddings)."""
+    if not q.strip():
+        raise HTTPException(status_code=422, detail="q must not be blank")
+    try:
+        store = get_store()
+    except ImportError:
+        raise HTTPException(status_code=503, detail="chromadb is not installed. Run: pip install -r requirements.txt")
+    if store.count() == 0:
+        raise HTTPException(status_code=503, detail="The vector index is empty. Run: python -m app.vectorstore --rebuild")
+    try:
+        hits = store.search(q, k)
+    except ValueError as err:
+        raise HTTPException(status_code=503, detail=str(err))
+    return SemanticOut(query=q, embedder=store.embedder.name, count=len(hits), results=hits)
 
 
 @app.post("/questions", response_model=QuestionOut, status_code=201)
@@ -130,6 +176,3 @@ def ask_question(payload: QuestionIn):
     )
     QUESTIONS.append(entry)
     return entry
-
-from app.chat import router as chat_router  # Day 6
-app.include_router(chat_router)
