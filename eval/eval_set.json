@@ -1,0 +1,17 @@
+[
+  {"id": 1, "question": "Who has to separate waste at home, and into which streams?", "expected_rules": [5], "must_refuse": false, "source": "card Q1"},
+  {"id": 2, "question": "Is my housing society a bulk waste generator and what must it do?", "expected_rules": [5, 6], "must_refuse": false, "source": "card Q2"},
+  {"id": 3, "question": "By when must a processing facility file its annual return?", "expected_rules": [7], "must_refuse": false, "source": "card Q3"},
+  {"id": 4, "question": "What bin colours must my municipality use?", "expected_rules": [39], "must_refuse": false, "source": "card Q4"},
+  {"id": 5, "question": "How did the 2026 rules change sanitary waste wrapping compared with 2016?", "expected_rules": [5], "must_refuse": false, "source": "card Q5"},
+  {"id": 6, "question": "What is the exact fine in rupees for a household that burns waste?", "expected_rules": [], "must_refuse": true, "source": "card Q6: the data has no amounts"},
+  {"id": 7, "question": "Which duties have a 30 June deadline?", "expected_rules": [6, 7, 8, 11, 14], "must_refuse": false, "source": "user question 7"},
+  {"id": 8, "question": "Does my municipality have to collect waste from my door every day?", "expected_rules": [39], "must_refuse": false, "source": "user question 8"},
+  {"id": 9, "question": "Who checks whether my municipality is following the rules?", "expected_rules": [37, 41], "must_refuse": false, "source": "user question 9"},
+  {"id": 10, "question": "When must urban local bodies make their bye-laws?", "expected_rules": [39], "must_refuse": false, "source": "user question 10"},
+  {"id": 11, "question": "Who has to file quarterly returns, and by when?", "expected_rules": [7, 8, 9], "must_refuse": false, "source": "added for the evaluation"},
+  {"id": 12, "question": "What must industrial units that use solid fuel do about refuse derived fuel?", "expected_rules": [11], "must_refuse": false, "source": "added for the evaluation"},
+  {"id": 13, "question": "What must a district panchayat prepare for waste in villages?", "expected_rules": [40], "must_refuse": false, "source": "added for the evaluation"},
+  {"id": 14, "question": "What must the Central Pollution Control Board set up and by when?", "expected_rules": [16], "must_refuse": false, "source": "added for the evaluation"},
+  {"id": 15, "question": "Can I get a refund on my income tax?", "expected_rules": [], "must_refuse": true, "source": "off-topic: nothing in the Rules"}
+]

@@ -110,6 +110,31 @@ class SemanticOut(BaseModel):
     results: List[SemanticHit]
 
 
+class AskIn(BaseModel):
+    question: str = Field(..., min_length=3, max_length=500, examples=["What bin colours must my municipality use?"])
+    k: int = Field(4, ge=1, le=10, description="how many chunks to retrieve")
+
+
+class CitationOut(BaseModel):
+    n: int
+    title: str
+    source: str
+    page: int
+    score: float
+    text: str
+    chunk_id: str = ""
+
+
+class AskOut(BaseModel):
+    question: str
+    answer: str
+    answered: bool
+    reason: str = Field(..., description="ok, or why it refused: low_similarity, no_amount_in_sources, low_coverage, ...")
+    generator: str
+    citations: List[CitationOut]
+    considered: List[CitationOut]
+
+
 def get_store():
     """Open the Chroma store once. Raises ImportError if chromadb is missing."""
     global _STORE
@@ -155,6 +180,23 @@ def search_semantic(q: str = Query(..., min_length=1, description="A question in
     except ValueError as err:
         raise HTTPException(status_code=503, detail=str(err))
     return SemanticOut(query=q, embedder=store.embedder.name, count=len(hits), results=hits)
+
+
+@app.post("/ask", response_model=AskOut)
+def ask(payload: AskIn):
+    """Answer from the retrieved PDF chunks with citations, or say "I don't know"."""
+    from app import rag
+    try:
+        store = get_store()
+    except ImportError:
+        raise HTTPException(status_code=503, detail="chromadb is not installed. Run: pip install -r requirements.txt")
+    if store.count() == 0:
+        raise HTTPException(status_code=503, detail="The vector index is empty. Run: python -m app.vectorstore --rebuild")
+    try:
+        result = rag.answer_question(payload.question, rag.retrieve_from_store(store), k=payload.k)
+    except ValueError as err:
+        raise HTTPException(status_code=503, detail=str(err))
+    return result.to_dict()
 
 
 @app.post("/questions", response_model=QuestionOut, status_code=201)

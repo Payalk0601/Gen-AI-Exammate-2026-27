@@ -16,7 +16,7 @@ SYNONYMS = {
     "colour": "paint green blue red", "color": "paint green blue red",
     "spcb": "state pollution control boards", "pollution": "pollution control",
     "collector": "district magistrates", "magistrate": "district magistrates",
-    "dustbin": "bins", "garbage": "waste", "rubbish": "waste", "kachra": "waste",
+    "dustbin": "bins", "separate": "segregate segregation", "garbage": "waste", "rubbish": "waste", "kachra": "waste",
     "deadline": "timeline", "check": "review enforce compliance", "following": "comply compliance", "penalty": "environmental compensation", "mrf": "material recovery facility",
 }
 _STOP = set(ENGLISH_STOP_WORDS)

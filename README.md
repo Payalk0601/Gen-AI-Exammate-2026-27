@@ -72,10 +72,14 @@ data/records_from_pdf.json # 222 clause rows built by app/ingest.py from the PDF
 data/raw/                  # downloaded source documents + manifest (committed as evidence)
 app/models.py   records.py   cli.py   ingest.py   fetch.py
 app/main.py                # FastAPI service
+app/rag.py                 # RAG: retrieve chunks, cite them, or say "I don't know"
+app/llm.py                 # Groq / Gemini wrapper (keys in .env, never committed)
 app/smart_search.py        # TF-IDF + cosine ranking (stemming + plain-language synonyms)
 app/chunking.py            # PDF -> chunks that keep source, page and title
 app/embed.py               # embedders (MiniLM / offline hash), in-memory semantic search, eval report
 app/vectorstore.py         # persistent Chroma collection of all chunks
+eval/eval_set.json        # 15 evaluation questions (2 must be refused)
+eval/run_eval.py           # compares chunk size / top-k configurations, writes the table below
 eval/search_results.md     # hits of the 10 questions (written by `python -m app.embed --eval`)
 analysis/explore.py        # pandas facts
 tests/test_api.py
@@ -132,6 +136,43 @@ uvicorn app.main:app --reload            # then: GET /search/semantic?q=bin colo
 
 The first run downloads the MiniLM model (about 80 MB) into `data/model_cache/` (git-ignored; change it with `KACHRACHECK_MODEL_DIR`) and needs internet. If Chroma has trouble with a path that contains
 non-English folder names or a OneDrive folder, store the index elsewhere: `set KACHRACHECK_CHROMA_DIR=C:\kachracheck_chroma`.
+
+## Ask a question (RAG)
+`POST /ask` retrieves the best chunks of the PDFs and answers **only from them**, with citations (rule title, file, page).
+If the sources do not contain the answer it says `I don't know`.
+```bash
+curl -X POST http://127.0.0.1:8000/ask -H "Content-Type: application/json" \
+     -d '{"question": "What bin colours must my municipality use?", "k": 4}'
+```
+```json
+{ "answered": true, "reason": "ok",
+  "answer": "Local bodies shall paint public bins green for wet waste and blue for dry waste ... [1]",
+  "citations": [ { "n": 1, "title": "Rule 39: ...", "source": "solid-waste-management-rules-2026.pdf", "page": 30 } ] }
+```
+When it refuses, `reason` says why: `low_similarity`, `no_amount_in_sources` (the question asks for a fine or price and no
+amount appears in the sources), `low_coverage` (the question's words appear nowhere in the sources), `model_said_unknown`, `no_citation`.
+
+Two answer modes, set with `KACHRACHECK_GENERATOR`:
+- `extractive`: no key needed. The answer is the best matching sentence copied from each of the top chunks.
+- `llm`: Groq or Gemini writes the answer and must cite `[1]`, `[2]`. Copy `.env.example` to `.env`, add a key, and keep `.env` out of Git.
+- `auto` (default): `llm` when a key exists, otherwise `extractive`. If the provider fails, it falls back to `extractive`.
+
+A similarity score alone cannot find unanswerable questions: "What is the exact fine in rupees for a household that burns
+waste?" scored higher than some correct questions. That is why the refusal checks look at what the question asks for.
+
+## RAG evaluation
+`python eval/run_eval.py --write-readme` runs the 15 questions in `eval/eval_set.json` through two configurations (chunk size and
+top-k) and writes the table below. A question counts as correct when an answerable question is answered **and** cites an expected rule,
+or when a must-refuse question gets "I don't know". Per-question detail: `eval/eval_results.md`.
+
+<!-- eval-table:start -->
+| Config | Chunk size | Top-k | Chunks | Accuracy | Retrieval hit | Refusals right | Wrong answers | Winner |
+|---|---|---|---|---|---|---|---|---|
+| A | 800 | 3 | 426 | 11/15 (73%) | 77% | 2/2 | 3 | **yes** |
+| B | 500 | 5 | 648 | 11/15 (73%) | 69% | 2/2 | 3 |  |
+
+Generator: `llm:groq/llama-3.3-70b-versatile` · Embedder: `all-MiniLM-L6-v2` · 15 questions (13 answerable, 2 must say "I don't know") · run 16 November 2026
+<!-- eval-table:end -->
 
 ## Limits
 Hand-curated from the gazette text; verify against the official PDF before relying on any clause.
