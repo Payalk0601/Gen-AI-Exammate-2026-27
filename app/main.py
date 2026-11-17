@@ -218,3 +218,6 @@ def ask_question(payload: QuestionIn):
     )
     QUESTIONS.append(entry)
     return entry
+
+from app.agent_api import router as agent_router  # Day 9
+app.include_router(agent_router)
