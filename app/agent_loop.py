@@ -10,7 +10,7 @@ import re
 import sys
 from pathlib import Path
 
-from app.llm import generate
+from app.llm import complete as generate
 from app.tools import run_tool, tool_descriptions
 
 PROMPTS = Path(__file__).resolve().parent.parent / "prompts"
