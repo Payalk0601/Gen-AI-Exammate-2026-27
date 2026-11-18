@@ -72,6 +72,12 @@ data/records_from_pdf.json # 222 clause rows built by app/ingest.py from the PDF
 data/raw/                  # downloaded source documents + manifest (committed as evidence)
 app/models.py   records.py   cli.py   ingest.py   fetch.py
 app/main.py                # FastAPI service
+app/tools.py               # waste_stream_sorter (CSV + difflib) and search_rules
+app/agent_loop.py          # hand-written agent loop
+app/graph.py               # the same agent in LangGraph: memory + one approval step
+ui/                        # Streamlit chat: app.py, compare.py (2016 vs 2026), feedback.py, preflight.py
+data/waste_items.csv       # 60 household items -> wet / dry / sanitary / special care
+data/rule_changes.json     # 12 duties: the 2016 rule next to the 2026 rule
 app/rag.py                 # RAG: retrieve chunks, cite them, or say "I don't know"
 app/llm.py                 # Groq / Gemini wrapper (keys in .env, never committed)
 app/smart_search.py        # TF-IDF + cosine ranking (stemming + plain-language synonyms)
@@ -166,13 +172,50 @@ top-k) and writes the table below. A question counts as correct when an answerab
 or when a must-refuse question gets "I don't know". Per-question detail: `eval/eval_results.md`.
 
 <!-- eval-table:start -->
-| Config | Chunk size | Top-k | Chunks | Accuracy | Retrieval hit | Refusals right | Wrong answers | Winner |
-|---|---|---|---|---|---|---|---|---|
-| A | 800 | 3 | 426 | 11/15 (73%) | 77% | 2/2 | 3 | **yes** |
-| B | 500 | 5 | 648 | 11/15 (73%) | 69% | 2/2 | 3 |  |
-
-Generator: `llm:groq/llama-3.3-70b-versatile` · Embedder: `all-MiniLM-L6-v2` · 15 questions (13 answerable, 2 must say "I don't know") · run 16 November 2026
+_Not run yet. Run `python eval/run_eval.py --write-readme`._
 <!-- eval-table:end -->
+
+## Agent: item sorter + Rules search
+The agent has two tools. `waste_stream_sorter` looks an item up in `data/waste_items.csv` (60 hand-built items, with aliases) and says
+which of the four 2026 streams it belongs to (wet, dry, sanitary, special care), with a handling note and the rule reference. It
+tolerates spelling mistakes with `difflib`. `search_rules` is the RAG search above.
+
+| File | What it does |
+|---|---|
+| `app/tools.py` | the two tools and a `ToolBox` that never raises (a failing tool comes back as `{"error": ...}`) |
+| `app/agent_loop.py` | hand-written loop: planner picks a tool, the loop runs it, reads the result, repeats (at most 4 steps) |
+| `app/graph.py` | the same agent as a LangGraph graph, with **memory** (last item and stream per `thread_id`) and **one approval step** |
+
+The planner only chooses tools (`KACHRACHECK_PLANNER=rules|llm|auto`). The reply is built from the tool results, so the stream
+comes from the table and the rule text from the cited chunks. Each item row says whether the Rules name it
+(`basis`) or whether it is my reading of the stream definitions, and the answer carries that caveat.
+
+`POST /agent` keeps a conversation with a `thread_id`. When the table had to guess a spelling, the graph pauses:
+```bash
+curl -X POST http://127.0.0.1:8000/agent -H "Content-Type: application/json" -d '{"message": "batery"}'
+# {"status": "needs_approval", "thread_id": "ab12...", "approval": {"message": "I read 'batery' as 'battery' (special care stream). Is that what you meant?"}}
+curl -X POST http://127.0.0.1:8000/agent -H "Content-Type: application/json" -d '{"thread_id": "ab12...", "approve": true}'
+```
+`GET /agent/{thread_id}` shows what the agent remembers.
+
+## Chat UI
+```bash
+uvicorn app.main:app            # terminal 1: the API
+streamlit run ui/app.py         # terminal 2: the chat on http://localhost:8501
+python ui/preflight.py          # before a demo: 8 checks on the whole stack
+```
+<!-- screenshot
+![Chat with the 2016 vs 2026 toggle](docs/img/ui_toggle.png)
+-->
+- **Two modes:** *Ask the Rules* (`/ask`) and *Agent* (`/agent`, with the approval step as Yes / No buttons).
+- **Citations:** every answer lists its sources with rule title, file and page.
+- **Thumbs up / down:** saved in `data/feedback.db` (one row per answer, git-ignored).
+- **2016 vs 2026 toggle:** every answer can flip to show the old rule next to the new rule, with removed words in red (2016) and
+  added words in green (2026), a one-line *what changed*, and the full 2026 clause. It covers 12 duties; an answer outside them
+  says so. Both sides are plain-language summaries in matching wording so the highlights show real differences; check the gazette
+  before relying on a line.
+
+Checkpoint 2 demo script: [docs/checkpoint-2.md](docs/checkpoint-2.md)
 
 ## Limits
 Hand-curated from the gazette text; verify against the official PDF before relying on any clause.

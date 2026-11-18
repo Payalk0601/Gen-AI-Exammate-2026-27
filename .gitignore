@@ -12,3 +12,5 @@ data/ingest_errors.log
 data/chroma/
 # downloaded embedding model (about 80 MB)
 data/model_cache/
+# thumbs up/down saved by the chat UI
+data/feedback.db
