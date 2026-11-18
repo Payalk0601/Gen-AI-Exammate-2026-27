@@ -1,168 +1,169 @@
-r"""The same agent rebuilt in LangGraph, with memory and one human approval step.
+"""The same agent rebuilt as a LangGraph graph, with memory and one human approval step.
 
-Graph:  start -> plan --(tool)--> run_tool -> plan ...
-                     \--(final)--> draft --(approval on)--> approval -> commit -> END
-                                          \--(approval off)------------> commit -> END
+        START -> begin -> plan --(final)------------------------------> respond -> END
+                           |  ^                                           ^  ^
+                           |  +---------------- rag <-- (search_rules) ---+  |
+                           +--(waste_stream_sorter)--> sorter --exact--> plan |
+                                                          |                   |
+                                                          +--fuzzy--> approve --(rejected)-+
+                                                                         +--(approved)--> plan
 
-* Memory: a MemorySaver checkpointer keeps state per thread_id, so follow-up questions on the
-  same thread see earlier turns (the `history` list).
-* Approval: the `approval` node calls interrupt(). The graph pauses and the API returns the draft
-  answer; a human then approves or rejects it through POST /agent/approve.
+  memory    a checkpointer keeps the state of each thread_id between turns: the last item and stream (so "why?" and
+            "what about it?" work) and the history of questions and answers.
+  approval  when the item table had to GUESS a spelling ("batery" -> "battery"), the graph pauses with `interrupt` and
+            waits for the user to confirm, because a wrong guess means the item goes in the wrong bin.
 """
-import operator
 import uuid
-from typing import Annotated, TypedDict
+from typing import Any, List, Optional, TypedDict, Annotated
+import operator
 
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
-from app.agent_loop import MAX_STEPS, decide, normalise_final, observation_text
-from app.tools import run_tool
+from app.agent_loop import MAX_STEPS, HELP_TEXT, Step, compose_answer, make_planner, memory_from
+from app.tools import ToolBox
 
 
 class AgentState(TypedDict, total=False):
     question: str
-    provider: str | None
-    require_approval: bool
-    history: Annotated[list, operator.add]  # grows across turns = memory
-    scratch: list
-    steps: int
-    decision: dict
-    draft: dict
-    final: dict
-    approved: bool | None
+    plan: dict
+    steps: List[dict]                       # replaced every turn
+    answer: str
+    approved: Optional[bool]
+    memory: dict                            # last_item, last_stream, last_rule: kept between turns
+    history: Annotated[list, operator.add]  # every question and answer of the thread
 
 
-def start_node(state: AgentState) -> dict:
-    return {"scratch": [], "steps": 0, "decision": {}, "draft": {}, "final": {}, "approved": None}
+def _steps(state) -> List[Step]:
+    return [Step(**s) for s in state.get("steps", [])]
 
 
-def plan_node(state: AgentState) -> dict:
-    decision = decide(state["question"], state["scratch"], state.get("history", []), state.get("provider"))
-    return {"decision": decision, "steps": state["steps"] + 1}
+def build_graph(toolbox: ToolBox, planner=None, checkpointer=None):
+    planner = planner or make_planner()
 
+    def begin(state: AgentState):
+        return {"steps": [], "plan": {}, "answer": "", "approved": None}
 
-def route_after_plan(state: AgentState) -> str:
-    if state["decision"]["action"] == "tool" and state["steps"] < MAX_STEPS:
-        return "run_tool"
-    return "draft"
+    def plan(state: AgentState):
+        steps = _steps(state)
+        if len(steps) >= MAX_STEPS:
+            return {"plan": {"action": "final"}}
+        try:
+            action = planner.next_action(state["question"], state.get("memory", {}), steps)
+        except Exception:
+            from app.agent_loop import RulePlanner
+            action = RulePlanner().next_action(state["question"], state.get("memory", {}), steps)
+        if "tool" in action and any(s.tool == action["tool"] and s.input == action["input"] for s in steps):
+            action = {"action": "final"}                   # repeating a call changes nothing
+        return {"plan": action}
 
+    def route_plan(state: AgentState):
+        tool = state["plan"].get("tool")
+        return {"waste_stream_sorter": "sorter", "search_rules": "rag"}.get(tool, "respond")
 
-def tool_node(state: AgentState) -> dict:
-    d = state["decision"]
-    scratch = state["scratch"]
-    if any(s["tool"] == d["tool"] and s["input"] == d["input"] for s in scratch):
-        obs = "You already ran this exact call. Use the earlier result and give the final answer now."
-    else:
-        obs = observation_text(run_tool(d["tool"], d["input"]))
-    return {"scratch": scratch + [{"step": state["steps"], "tool": d["tool"], "input": d["input"], "observation": obs}]}
+    def run_tool(state: AgentState):
+        steps = state.get("steps", [])
+        action = state["plan"]
+        obs = toolbox.call(action["tool"], action["input"])
+        return {"steps": steps + [Step(len(steps) + 1, action["tool"], action["input"], obs).to_dict()]}
 
+    def route_sorter(state: AgentState):
+        obs = state["steps"][-1]["observation"]
+        return "approve" if obs.get("found") and obs.get("needs_confirmation") else "plan"
 
-def draft_node(state: AgentState) -> dict:
-    d = state["decision"]
-    if d["action"] == "final":
-        return {"draft": normalise_final(d)}
-    return {
-        "draft": {
-            "answer": "I could not finish within the step limit. Please rephrase or narrow the question.",
-            "confidence": "low",
-            "follow_up": "Which single item or rule should I look at first?",
-        }
-    }
+    def approve(state: AgentState):
+        last = state["steps"][-1]["observation"]
+        decision = interrupt({
+            "type": "confirm_item",
+            "message": f"I read '{last['query']}' as '{last['matched_item']}' ({last['stream']} stream). Is that what you meant?",
+            "typed": last["query"], "proposed_item": last["matched_item"], "stream": last["stream"]})
+        approved = bool(decision.get("approve")) if isinstance(decision, dict) else bool(decision)
+        if approved:
+            return {"approved": True}
+        steps = list(state["steps"])
+        rejected = {"found": False, "query": last["query"], "match_type": "none", "similarity": last["similarity"],
+                    "needs_confirmation": False, "rejected_by_user": True, "suggestions": last.get("suggestions", [])}
+        steps[-1] = {**steps[-1], "observation": rejected}
+        return {"approved": False, "steps": steps}
 
+    def route_approve(state: AgentState):
+        return "plan" if state.get("approved") else "respond"
 
-def route_after_draft(state: AgentState) -> str:
-    return "approval" if state.get("require_approval") else "commit"
+    def respond(state: AgentState):
+        steps = _steps(state)
+        if state.get("approved") is False:
+            rejected = steps[-1].observation
+            hint = f" Did you mean one of: {', '.join(rejected['suggestions'])}?" if rejected.get("suggestions") else ""
+            answer = f"Okay, I won't guess.{hint} Tell me the item again, maybe spelled differently."
+        else:
+            answer = compose_answer(steps) or state["plan"].get("message") or HELP_TEXT
+        return {"answer": answer, "memory": memory_from(steps, state.get("memory", {})),
+                "history": [{"question": state["question"], "answer": answer}]}
 
-
-def approval_node(state: AgentState) -> dict:
-    """Pause here until a human approves or rejects the draft."""
-    reply = interrupt(
-        {
-            "type": "approval_needed",
-            "draft": state["draft"],
-            "tools_used": [s["tool"] for s in state["scratch"]],
-        }
-    )
-    approved = bool(reply.get("approve")) if isinstance(reply, dict) else bool(reply)
-    if approved:
-        return {"approved": True}
-    note = reply.get("note", "") if isinstance(reply, dict) else ""
-    return {
-        "approved": False,
-        "draft": {
-            "answer": "A reviewer rejected the draft answer, so nothing is shown. Please rephrase or ask a human.",
-            "confidence": "low",
-            "follow_up": note,
-        },
-    }
-
-
-def commit_node(state: AgentState) -> dict:
-    final = state["draft"]
-    return {"final": final, "history": [{"q": state["question"], "a": final["answer"]}]}
-
-
-def build_graph():
     g = StateGraph(AgentState)
-    g.add_node("start", start_node)
-    g.add_node("plan", plan_node)
-    g.add_node("run_tool", tool_node)
-    g.add_node("draft", draft_node)
-    g.add_node("approval", approval_node)
-    g.add_node("commit", commit_node)
-
-    g.add_edge(START, "start")
-    g.add_edge("start", "plan")
-    g.add_conditional_edges("plan", route_after_plan, {"run_tool": "run_tool", "draft": "draft"})
-    g.add_edge("run_tool", "plan")
-    g.add_conditional_edges("draft", route_after_draft, {"approval": "approval", "commit": "commit"})
-    g.add_edge("approval", "commit")
-    g.add_edge("commit", END)
-    return g.compile(checkpointer=MemorySaver())
-
-
-GRAPH = build_graph()
+    g.add_node("begin", begin)
+    g.add_node("plan", plan)
+    g.add_node("sorter", run_tool)
+    g.add_node("rag", run_tool)
+    g.add_node("approve", approve)
+    g.add_node("respond", respond)
+    g.add_edge(START, "begin")
+    g.add_edge("begin", "plan")
+    g.add_conditional_edges("plan", route_plan, {"sorter": "sorter", "rag": "rag", "respond": "respond"})
+    g.add_conditional_edges("sorter", route_sorter, {"approve": "approve", "plan": "plan"})
+    g.add_edge("rag", "plan")
+    g.add_conditional_edges("approve", route_approve, {"plan": "plan", "respond": "respond"})
+    g.add_edge("respond", END)
+    return g.compile(checkpointer=checkpointer or InMemorySaver()), planner
 
 
-def _result(thread_id: str) -> dict:
-    config = {"configurable": {"thread_id": thread_id}}
-    snap = GRAPH.get_state(config)
-    values = snap.values or {}
-    steps = values.get("scratch", [])
-    if snap.next:  # paused at the approval node
-        pending = None
-        for task in snap.tasks:
-            if task.interrupts:
-                pending = task.interrupts[0].value
-                break
-        return {"status": "awaiting_approval", "thread_id": thread_id, "draft": (pending or {}).get("draft", values.get("draft")), "steps": steps}
-    final = values.get("final") or {}
-    return {
-        "status": "done",
-        "thread_id": thread_id,
-        "approved": values.get("approved"),
-        **final,
-        "steps": steps,
-        "turns_in_memory": len(values.get("history", [])),
-    }
+class PendingApproval(Exception):
+    """A new message arrived while the thread is waiting for the user to confirm an item."""
 
 
-def ask(question: str, thread_id: str | None = None, require_approval: bool = True, provider: str | None = None) -> dict:
-    """Start (or continue) a conversation on a thread."""
-    thread_id = thread_id or uuid.uuid4().hex
-    config = {"configurable": {"thread_id": thread_id}}
-    if GRAPH.get_state(config).next:
-        raise ValueError("this thread is waiting for approval; call /agent/approve first")
-    GRAPH.invoke({"question": question, "provider": provider, "require_approval": require_approval}, config)
-    return _result(thread_id)
+class AgentService:
+    """What POST /agent talks to: one graph, one memory store, many threads."""
 
+    def __init__(self, toolbox: ToolBox, planner=None):
+        self.graph, self.planner = build_graph(toolbox, planner)
 
-def approve(thread_id: str, approved: bool, note: str = "") -> dict:
-    """Resume a paused thread with the human's decision."""
-    config = {"configurable": {"thread_id": thread_id}}
-    if not GRAPH.get_state(config).next:
-        raise ValueError("no pending approval on this thread")
-    GRAPH.invoke(Command(resume={"approve": approved, "note": note}), config)
-    return _result(thread_id)
+    @staticmethod
+    def _config(thread_id: str) -> dict:
+        return {"configurable": {"thread_id": thread_id}}
+
+    def waiting_for_approval(self, thread_id: str) -> bool:
+        return bool(self.graph.get_state(self._config(thread_id)).next)
+
+    def known(self, thread_id: str) -> bool:
+        return bool(self.graph.get_state(self._config(thread_id)).values)
+
+    def ask(self, message: str, thread_id: Optional[str] = None) -> dict:
+        thread_id = thread_id or uuid.uuid4().hex[:12]
+        if self.waiting_for_approval(thread_id):
+            raise PendingApproval(thread_id)
+        result = self.graph.invoke({"question": message}, self._config(thread_id))
+        return self._shape(thread_id, result)
+
+    def resume(self, thread_id: str, approve: bool) -> dict:
+        if not self.waiting_for_approval(thread_id):
+            raise KeyError(thread_id)
+        result = self.graph.invoke(Command(resume={"approve": approve}), self._config(thread_id))
+        return self._shape(thread_id, result)
+
+    def memory(self, thread_id: str) -> dict:
+        values = self.graph.get_state(self._config(thread_id)).values or {}
+        return {"thread_id": thread_id, "memory": values.get("memory", {}), "history": values.get("history", [])}
+
+    def _shape(self, thread_id: str, result: dict) -> dict:
+        state = self.graph.get_state(self._config(thread_id)).values
+        steps = state.get("steps", [])
+        out = {"thread_id": thread_id, "planner": self.planner.name, "steps": steps,
+               "tools_used": [s["tool"] for s in steps], "memory": state.get("memory", {}),
+               "citations": [c for s in steps if s["tool"] == "search_rules" for c in s["observation"].get("citations", [])]}
+        interrupts = result.get("__interrupt__")
+        if interrupts:
+            out.update(status="needs_approval", answer="", approval=interrupts[0].value)
+        else:
+            out.update(status="done", answer=state.get("answer", ""), approval=None)
+        return out

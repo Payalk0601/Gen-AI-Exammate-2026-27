@@ -27,6 +27,7 @@ RECORDS = rec.load_records()
 ENGINE = SmartSearch(RECORDS) if SmartSearch else None
 QUESTIONS: list = []                    # in-memory log of POST /questions
 _STORE = None                           # Chroma vector store, opened on first use
+_AGENT = None                           # LangGraph agent service, built on first use
 
 
 class RecordOut(BaseModel):
@@ -135,6 +136,35 @@ class AskOut(BaseModel):
     considered: List[CitationOut]
 
 
+class AgentIn(BaseModel):
+    message: Optional[str] = Field(None, min_length=1, max_length=500, examples=["Where does a used battery go?"])
+    thread_id: Optional[str] = Field(None, max_length=64, description="keeps the conversation: reuse the one you got back")
+    approve: Optional[bool] = Field(None, description="answer to an approval request: true or false (needs thread_id)")
+
+
+class AgentOut(BaseModel):
+    thread_id: str
+    status: str = Field(..., description="done, or needs_approval when a guessed spelling must be confirmed")
+    answer: str
+    approval: Optional[dict] = None
+    steps: List[dict]
+    tools_used: List[str]
+    citations: List[dict]
+    planner: str
+    memory: dict
+
+
+def get_agent():
+    """Build the agent once. Raises ImportError if langgraph is missing and ValueError for a bad planner setting."""
+    global _AGENT
+    if _AGENT is None:
+        from app.agent_loop import make_planner
+        from app.graph import AgentService
+        from app.tools import ToolBox
+        _AGENT = AgentService(ToolBox(get_store=get_store), make_planner())
+    return _AGENT
+
+
 def get_store():
     """Open the Chroma store once. Raises ImportError if chromadb is missing."""
     global _STORE
@@ -199,6 +229,43 @@ def ask(payload: AskIn):
     return result.to_dict()
 
 
+@app.post("/agent", response_model=AgentOut)
+def agent(payload: AgentIn):
+    """Ask the agent (item sorter + rules search). A guessed spelling pauses for approval: answer it with approve=true/false."""
+    try:
+        service = get_agent()
+        from app.graph import PendingApproval
+    except ImportError:
+        raise HTTPException(status_code=503, detail="langgraph is not installed. Run: pip install -r requirements.txt")
+    except ValueError as err:
+        raise HTTPException(status_code=503, detail=str(err))
+    if payload.approve is not None:
+        if not payload.thread_id:
+            raise HTTPException(status_code=422, detail="thread_id is required when you send approve")
+        try:
+            return service.resume(payload.thread_id, payload.approve)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="That thread is not waiting for an approval")
+    if not payload.message:
+        raise HTTPException(status_code=422, detail="send a message, or approve with a thread_id")
+    try:
+        return service.ask(payload.message, payload.thread_id)
+    except PendingApproval:
+        raise HTTPException(status_code=409, detail="This thread is waiting for your approval. Send thread_id and approve: true or false.")
+
+
+@app.get("/agent/{thread_id}")
+def agent_memory(thread_id: str):
+    """What the agent remembers for a thread: the last item and the question history."""
+    try:
+        service = get_agent()
+    except (ImportError, ValueError) as err:
+        raise HTTPException(status_code=503, detail=str(err))
+    if not service.known(thread_id):
+        raise HTTPException(status_code=404, detail="Unknown thread")
+    return service.memory(thread_id)
+
+
 @app.post("/questions", response_model=QuestionOut, status_code=201)
 def ask_question(payload: QuestionIn):
     result = _search(payload.question, 3)
@@ -218,6 +285,3 @@ def ask_question(payload: QuestionIn):
     )
     QUESTIONS.append(entry)
     return entry
-
-from app.agent_api import router as agent_router  # Day 9
-app.include_router(agent_router)
