@@ -188,7 +188,6 @@ class AppTests(unittest.TestCase):
         self.assertIn("paint public bins green", self.all_markdown())
         self.assertEqual([e.label for e in self.at.expander], ["Sources (1)"])
         up = next(b for b in self.at.button if b.label == "👍")
-        down = next(b for b in self.at.button if b.label == "👎")
         up.click().run()
         self.assertEqual(feedback.counts(), {"up": 1, "down": 0})
         next(b for b in self.at.button if b.label == "👎").click().run()

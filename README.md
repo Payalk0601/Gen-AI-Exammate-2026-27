@@ -220,3 +220,32 @@ Checkpoint 2 demo script: [docs/checkpoint-2.md](docs/checkpoint-2.md)
 ## Limits
 Hand-curated from the gazette text; verify against the official PDF before relying on any clause.
 This is a study project, not legal advice.
+
+## Run with Docker
+
+You need Docker Desktop (or Docker Engine with the compose plugin).
+
+1. Copy the example settings and add your key:
+   ```
+   copy .env.example .env      # Windows (use cp on Mac/Linux)
+   ```
+   Open `.env` and put your Groq or Gemini key in it. `.env` is never committed or copied into the image.
+2. Build and start the API and the UI:
+   ```
+   docker compose up --build
+   ```
+3. Open the apps:
+   - API docs: http://localhost:8000/docs
+   - Health check: http://localhost:8000/health
+   - Chat UI: http://localhost:8501
+4. Stop everything with `Ctrl+C`, then `docker compose down`.
+
+The `api` and `ui` services use the same image. The UI waits until the API health check passes, and it talks to the API at `http://api:8000` inside the Docker network. Thumbs up/down feedback is kept in a Docker volume called `feedback`.
+
+## Run tests and lint
+
+```
+pip install -r requirements-dev.txt
+pytest
+ruff check .
+```

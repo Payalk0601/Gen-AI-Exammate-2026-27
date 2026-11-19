@@ -8,3 +8,9 @@ scikit-learn>=1.4
 chromadb>=1.0
 langgraph>=1.0
 streamlit>=1.40
+fastapi
+uvicorn
+requests
+python-dotenv
+langgraph
+streamlit

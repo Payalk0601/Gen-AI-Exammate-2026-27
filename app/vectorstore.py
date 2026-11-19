@@ -11,7 +11,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 from app.chunking import Chunk, chunk_raw_dir
 from app.embed import get_embedder

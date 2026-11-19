@@ -17,6 +17,10 @@ STOP = {"the", "and", "for", "what", "does", "how", "who", "are", "can", "must",
 router = APIRouter()
 
 
+class ModelOutputError(Exception):
+    """The LLM replied, but not with the JSON shape we asked for."""
+
+
 class ChatRequest(BaseModel):
     question: str = Field(min_length=3)
     prompt_version: str = "v2"
@@ -74,7 +78,11 @@ def answer_question(question: str, version: str = "v2", provider: str | None = N
     task = (PROMPTS / VERSIONS[version]).read_text(encoding="utf-8")
     context = json.dumps(retrieve(question), ensure_ascii=False, indent=1)
     user = task.replace("{context}", context).replace("{question}", question)
-    return parse_output(generate(system, user, provider))
+    raw = generate(system, user, provider)
+    try:
+        return parse_output(raw)
+    except ValueError as e:  # includes json.JSONDecodeError
+        raise ModelOutputError(str(e)) from e
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -85,5 +93,5 @@ def chat(req: ChatRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except LLMError as e:
         raise HTTPException(status_code=502, detail=f"LLM error: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Could not process model output: {e}")
+    except ModelOutputError as e:
+        raise HTTPException(status_code=502, detail=f"Model returned an unusable reply: {e}")

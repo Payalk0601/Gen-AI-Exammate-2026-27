@@ -38,7 +38,7 @@ class ParsingTests(unittest.TestCase):
     def test_clauses_get_sub_rule_and_letter_and_intro(self):
         body = ingest.split_rules(SAMPLE)[5][1]
         clauses = ingest.split_clauses(body)
-        refs = [(s, l) for s, l, _ in clauses]
+        refs = [(s, line_no) for s, line_no, _ in clauses]
         self.assertEqual(refs, [(1, "a"), (1, "b"), (2, None)])
         self.assertTrue(clauses[0][2].startswith("Every waste generator shall"))
 

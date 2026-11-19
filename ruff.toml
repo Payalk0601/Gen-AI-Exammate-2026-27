@@ -1,0 +1,5 @@
+# `ruff check .` must pass. Default rules (pyflakes errors + the serious pycodestyle ones).
+extend-exclude = ["data", ".venv", "venv"]
+
+[lint]
+select = ["E4", "E7", "E9", "F"]

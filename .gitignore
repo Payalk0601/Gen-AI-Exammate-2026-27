@@ -14,3 +14,5 @@ data/chroma/
 data/model_cache/
 # thumbs up/down saved by the chat UI
 data/feedback.db
+.pytest_cache/
+.ruff_cache/
