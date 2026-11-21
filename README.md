@@ -260,3 +260,6 @@ ruff check .
 
 
 
+
+**Live demo:** https://USERNAME-kachracheck.hf.space
+**Health check:** https://USERNAME-kachracheck.hf.space/health
