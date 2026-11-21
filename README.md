@@ -261,5 +261,6 @@ ruff check .
 
 
 
-**Live demo:** https://USERNAME-kachracheck.hf.space
-**Health check:** https://USERNAME-kachracheck.hf.space/health
+**Live demo:** https://myname-kachracheck.hf.space
+**Health check:** https://myname-kachracheck.hf.space/health
+
