@@ -1,4 +1,10 @@
-﻿![CI](https://github.com/Payalk0601/Gen-AI-Exammate-2026-27/actions/workflows/ci.yml/badge.svg)
+﻿---
+title: KachraCheck
+sdk: docker
+app_port: 8000
+---
+
+![CI](https://github.com/Payalk0601/Gen-AI-Exammate-2026-27/actions/workflows/ci.yml/badge.svg)
 
 # KachraCheck
 
@@ -251,4 +257,6 @@ pip install -r requirements-dev.txt
 pytest
 ruff check .
 ```
+
+
 
