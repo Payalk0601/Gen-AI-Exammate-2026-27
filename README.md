@@ -1,3 +1,5 @@
+﻿![CI](https://github.com/Payalk0601/Gen-AI-Exammate-2026-27/actions/workflows/ci.yml/badge.svg)
+
 # KachraCheck
 
 **A stakeholder-wise duty checker for India's Solid Waste Management Rules, 2026.**
@@ -11,7 +13,7 @@ Rules expect from you, by when, and how it differs from the 2016 Rules.
 | **Problem** | The 2026 Rules replace the 2016 Rules, run to 40+ pages, and split duties across 15+ stakeholders (generators, bulk generators, urban and rural local bodies, state departments, SPCBs, facility operators). Most people cannot tell which clause binds them or what changed. |
 | **Data source** | Solid Waste Management Rules, 2026 (Gazette S.O. 388(E), 27 Jan 2026, in force 1 April 2026), published by CPCB: <https://swmp.cpcb.gov.in/img/cpcb_doc/solid-waste-management-rules-2026.pdf>. 2016 clause mapping comes from the SWM Rules 2016 toolkit (MoEFCC/MoHUA/CPCB/NPC). |
 
-**Author:** Payal, B.Tech (AI & ML), Sanjivani University, Kopargaon · Gen AI Exammate 2026-27
+**Author:** Payal, B.Tech (AI & ML), Sanjivani University, Kopargaon Â· Gen AI Exammate 2026-27
 
 ## Six questions KachraCheck should answer
 1. Who has to separate waste at home, and into which streams?
@@ -21,7 +23,7 @@ Rules expect from you, by when, and how it differs from the 2016 Rules.
 5. How did the 2026 rules change sanitary waste wrapping compared with 2016?
 6. What is the exact fine in rupees for a household that burns waste? *(my data cannot answer this one, and the API says so)*
 
-All ten test questions: [docs/user_questions.md](docs/user_questions.md) · How LLMs work: [docs/how_llms_work.md](docs/how_llms_work.md) · Checkpoint 1: [docs/checkpoint-1.md](docs/checkpoint-1.md) · Data pipeline results: [docs/data_pipeline.md](docs/data_pipeline.md)
+All ten test questions: [docs/user_questions.md](docs/user_questions.md) Â· How LLMs work: [docs/how_llms_work.md](docs/how_llms_work.md) Â· Checkpoint 1: [docs/checkpoint-1.md](docs/checkpoint-1.md) Â· Data pipeline results: [docs/data_pipeline.md](docs/data_pipeline.md)
 
 ## Record fields
 `id, rule_reference, stakeholder, category, obligation, timeline, rules_version, rule_2016_match, source_url`
@@ -249,3 +251,4 @@ pip install -r requirements-dev.txt
 pytest
 ruff check .
 ```
+
