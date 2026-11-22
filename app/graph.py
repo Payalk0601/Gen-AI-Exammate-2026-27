@@ -14,7 +14,7 @@
             waits for the user to confirm, because a wrong guess means the item goes in the wrong bin.
 """
 import uuid
-from typing import List, Optional, TypedDict, Annotated
+from typing import Any, List, Optional, TypedDict, Annotated
 import operator
 
 from langgraph.checkpoint.memory import InMemorySaver
