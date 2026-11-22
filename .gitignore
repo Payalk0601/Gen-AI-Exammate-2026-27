@@ -16,3 +16,4 @@ data/model_cache/
 data/feedback.db
 .pytest_cache/
 .ruff_cache/
+logs/
