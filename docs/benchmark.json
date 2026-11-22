@@ -1,0 +1,23 @@
+{
+  "endpoint": "/ask",
+  "requests": 20,
+  "failures": 0,
+  "cold_p50": 5583.0,
+  "cold_p95": 18415.3,
+  "warm_p50": 2375.9,
+  "warm_p95": 13027.6,
+  "speedup": 2.3,
+  "cache_hit_rate": null,
+  "avg_prompt_tokens": null,
+  "avg_completion_tokens": null,
+  "avg_total_tokens": null,
+  "tokens_estimated": 0,
+  "injection_flagged": 3,
+  "injection_prompts": 3,
+  "key_leaks": 0,
+  "limits_ok": true,
+  "tokens_all_estimated": false,
+  "tests_passed": null,
+  "tests_failed": null,
+  "ruff_clean": null
+}

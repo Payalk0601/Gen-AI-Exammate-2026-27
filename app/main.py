@@ -285,3 +285,6 @@ def ask_question(payload: QuestionIn):
     )
     QUESTIONS.append(entry)
     return entry
+
+from app.prod import install as install_prod  # Day 13
+install_prod(app)
