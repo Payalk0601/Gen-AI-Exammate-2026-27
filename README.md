@@ -271,3 +271,6 @@ ruff check .
 
 
 
+
+## Screenshot
+![KachraCheck UI](docs/ui_screenshot.png)
